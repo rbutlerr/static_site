@@ -97,7 +97,6 @@ def split_nodes_image(old_nodes: list[TextNode]) -> list[TextNode]:
         raw_text = node.text
         ## we are going to eat raw_text
         txt_node_lst = []
-        low_index = 0
         
         for image_md in image_info:
             img_raw = f"![{image_md[0]}]({image_md[1]})"
@@ -118,8 +117,34 @@ def split_nodes_image(old_nodes: list[TextNode]) -> list[TextNode]:
 
 
 
-def split_nodes_link(old_nodes: list[TextNode]) -> list[TextNode]:
-    pass
+def split_nodes_link(old_nodes: list[TextNode]) -> list[TextNode]: 
+    ##yeah i know it says image but it is really links
+    ## i am too lazy to change it
+    split_nodes = []
+    for node in old_nodes:
+        if node.text_type != TextType.TEXT:
+            split_nodes.append(node)
+            continue
+        image_info = extract_markdown_links(node.text)
+        if len(image_info) == 0:
+            split_nodes.append(node)
+            continue
+        raw_text = node.text
+        ## we are going to eat raw_text
+        txt_node_lst = []
+        
+        for image_md in image_info:
+            img_raw = f"[{image_md[0]}]({image_md[1]})"
+            curr_index = raw_text.index(img_raw)
+            if curr_index > 0:
+                txt_node_lst.append(TextNode(raw_text[0:curr_index],TextType.TEXT))
+                raw_text = raw_text[curr_index:]
+            txt_node_lst.append(TextNode(image_md[0], TextType.LINK, image_md[1]))
+            raw_text = raw_text[len(img_raw):]
+        if len(raw_text) > 0:
+            txt_node_lst.append(TextNode(raw_text,TextType.TEXT))
+        split_nodes.extend(txt_node_lst)
+    return split_nodes
 def extract_markdown_images(text: str) -> list:
     matches = re.findall(r"!\[([^\[\]]*)\]\(([^\(\)]*)\)",text)
     return matches
