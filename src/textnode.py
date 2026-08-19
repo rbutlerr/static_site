@@ -3,19 +3,21 @@ from htmlnode import LeafNode
 import re
 
 class TextType(Enum):
-    TEXT = 1
-    BOLD = 2
-    ITALIC = 3
-    CODE = 4
-    LINK = 5
-    IMAGE = 6
+    TEXT = "text"
+    BOLD = "bold"
+    ITALIC = "italic"
+    CODE = "code"
+    LINK = "link"
+    IMAGE = "image"
 
 class TextNode:
-    def __init__(self, text, text_type, url=None):
+    def __init__(self, text: str, text_type: TextType, url: str | None =None):
         self.text = text
-        self.text_type = TextType(text_type)
+        self.text_type = text_type
         self.url = url
     def __eq__(self, other):
+        if not isinstance(other, TextNode):
+            return False
         return (self.text == other.text and
             self.text_type == other.text_type and
             self.url == other.url)
@@ -59,15 +61,16 @@ def split_nodes_delimiter(old_nodes: list[TextNode], delimiter: str, text_type: 
     ##This is a very dumb function
     ##do not try to input crazy stuff, just inline unnested formatting
     delim_text_type_map = {
-            "**":text_type.BOLD,
-            "_":text_type.ITALIC,
-            "`":text_type.CODE}
+            "**": TextType.BOLD,
+            "_": TextType.ITALIC,
+            "`": TextType.CODE}
     if delimiter not in delim_text_type_map:
         raise ValueError(f"invalid delimiter: {delimiter}")
     split_nodes = []
     for node in old_nodes:
         if node.text_type != TextType.TEXT:
             split_nodes.append(node)
+            continue
 
         split = node.text.split(delimiter)
         if len(split)%2 == 0:
@@ -154,4 +157,11 @@ def extract_markdown_links(text:str) -> list:
     return matches
 
         
-
+def text_to_text_nodes(text:str) -> list:
+    node_list = [TextNode(text, TextType.TEXT)]
+    node_list = split_nodes_delimiter(node_list, "**",TextType.BOLD)
+    node_list = split_nodes_delimiter(node_list,"_",TextType.ITALIC)
+    node_list = split_nodes_delimiter(node_list,"`",TextType.CODE)
+    node_list = split_nodes_link(node_list)
+    node_list = split_nodes_image(node_list)
+    return node_list
