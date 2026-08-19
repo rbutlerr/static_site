@@ -1,3 +1,5 @@
 
 def markdown_to_blocks(markdown: str):
-    return markdown.split('\n\n').strip()
+    block_chain = markdown.split('\n\n') #haha blockchain
+
+    return [item.strip() for item in block_chain if item.strip()]
